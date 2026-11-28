@@ -67,6 +67,28 @@ Se implementa un árbol de búsqueda binaria común y se agrega información de 
 - Todos los caminos tienen la misma cantidad de nodos negros.
 - Se mantienen las propiedades del árbol de búsqueda binario.
 - El camino más largo no supera el doble de la longitud del camino más corto.
+
+### Reparación tras la inserción
+Un nodo nuevo `N` se inserta siempre de color **rojo**. Así la altura negra no cambia y lo único que puede romperse es la regla "un nodo rojo no tiene hijos rojos" y solo si su padre `P` también es rojo. En ese caso `P` no puede ser la raíz (la raíz es negra), por lo que existe un abuelo `G` y es negro (si fuera rojo, `P` tendría un padre rojo). Lo que se hace depende del color del tío `U`, el otro hijo de `G`:
+
+| Caso | Situación | Acción | ¿Termina? |
+| --- | --- | --- | --- |
+| 1 | `U` rojo | Pintar `P` y `U` de negro y `G` de rojo | No: se repite desde `G` |
+| 2 | `U` negro y `N` es hijo "interno" de `P` (triángulo) | Rotar en `P`, lo que lleva al caso 3 | No |
+| 3 | `U` negro y `N` es hijo "externo" de `P` (línea) | Pintar `P` de negro y `G` de rojo, y rotar en `G` | Sí |
+
+![Caso 1: tío rojo, se resuelve recoloreando](red-black-tree-insercion-recoloreo.svg)
+
+*Caso 1: no hay rotaciones. La altura negra no cambia, pero `G` pasó a rojo y puede quedar con un padre rojo, por lo que la revisión continúa desde `G`.*
+
+![Casos 2 y 3: tío negro, una o dos rotaciones](red-black-tree-insercion-rotaciones.svg)
+
+*Casos 2 y 3 (aquí con `P` como hijo izquierdo, el otro caso es simétrico). La rotación en `P` pasa del triángulo a la línea (el subárbol T2 cambia de padre). La rotación en `G` termina la reparación (T3 cambia de padre). La raíz del subárbol queda negra, igual que `G` antes, por lo que la altura negra se conserva.*
+
+Esto explica las cotas de la inserción. El caso 1 solo recolorea, y puede repetirse subiendo por el árbol hasta la raíz: son a lo sumo O(log n) recoloreos. Los casos 2 y 3 terminan la reparación, y entre ambos hacen como máximo **dos rotaciones** (una en `P` y otra en `G`). Al final, `reparar_insercion` pinta la raíz de negro por si el caso 1 llegó hasta ella.
+
+En el código, cada caso aparece en `reparar_insercion`: `tio.color == 'rojo'` es el caso 1, el `if` interno, que reasigna `nuevo_nodo` al padre y rota en él, es el caso 2 y las últimas tres líneas del `else` son el caso 3. Con el ejemplo de la sección siguiente, al insertar 30 ocurre el caso 3 y al insertar 15 el caso 1. El caso 2 aparece, por ejemplo, al insertar 7 en un árbol con `[20, 10, 30, 5]`.
+
 ### Ejemplo de código
 ```python
 class NodoRB:
